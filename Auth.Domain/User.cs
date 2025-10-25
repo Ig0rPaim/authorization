@@ -5,19 +5,25 @@ public class User
     public string Email { get; set; }
     public List<Role> Roles { get; private set; }
     public List<Authorization> Authorizations { get; private set; }
-
+    public List<Authorization> AllAuthorizations
+    {
+        get
+        {
+            return Roles
+                .Select(r => r.Authorizations)
+                .Aggregate((auth, next) => auth.Concat(next).ToList())
+                .Concat(Authorizations).ToList();
+        }
+    }
     public void AddAuthorizations(List<Authorization> authorization, Func<List<Role>> getAllRoles)
     {
         var allRoles = getAllRoles();
         var rolesToAdd = new List<Role>();
         allRoles.RemoveAll(r => Roles.Contains(r));
-
-        allRoles.ForEach(r =>
-        {
-            AuthorizationMaybeIncludedInRole(r, ref authorization, rolesToAdd);
-            AuthorizationMaybeLeakRole(r, authorization, rolesToAdd);
-                        
-        });
+        rolesToAdd.AddRange(
+            allRoles
+                .Select(r => r.AuthorizationsInRole(authorization))
+                .Where(r => r.IsValide()));
         
         if (rolesToAdd.Any())
         {
@@ -31,60 +37,46 @@ public class User
             Authorizations.AddRange(authorization);
         }
     }
-
-    void AuthorizationMaybeIncludedInRole(Role roleNotAdded, ref List<Authorization> authorizationsToAdded, List<Role> rolesToAdd)
+    public void RemoveAuthorizations(List<Authorization> authorization, bool force = false)
     {
-        if (roleNotAdded.Authorizations.Count <= authorizationsToAdded.Count)
+        var authorizationsToRemove = Authorizations.Where(authorization.Contains);
+        
+        Authorizations.RemoveAll(a => authorizationsToRemove.Contains(a));
+        
+        authorization.RemoveAll(authorizationsToRemove.Contains);
+        
+        if(!authorization.Any())
             return;
-        bool newAuthInsideRole = !authorizationsToAdded.Select(a => roleNotAdded.Authorizations.Contains(a)).Contains(false);
-        if (newAuthInsideRole)
+        
+        var rolesToRemove = Roles.Select(r => r.AnyAuthorizationAreInRole(authorization)).Where(r => r.IsValide());
+        
+        var toRemove = rolesToRemove as Role[] ?? rolesToRemove.ToArray();
+        
+        if (!toRemove.Any())
+            return;
+        
+        if (!force)
         {
-            rolesToAdd.Add(roleNotAdded);
-            authorizationsToAdded = new List<Authorization>();
+            string message = string.Join("\n", Role.RolesThatWillRemoved(toRemove));
+            throw new InvalidOperationException(message);
         }
+        
+        Roles.RemoveAll(r => toRemove.Contains(r));
     }
-    void AuthorizationMaybeLeakRole(Role roleNotAdded, List<Authorization> authorizationsToAdded, List<Role> rolesToAdd)
+    public void AddRole(Role role)
     {
-        if(roleNotAdded.Authorizations.Count > authorizationsToAdded.Count)
-            return;
-        bool newAuthLeakRole =  !roleNotAdded.Authorizations.Select(a => authorizationsToAdded.Contains(a)).Contains(false);
-        if (newAuthLeakRole)
-        {
-            rolesToAdd.Add(roleNotAdded);
-            authorizationsToAdded.RemoveAll(a => 
-                rolesToAdd
-                    .Select(r => r.Authorizations)
-                    .Aggregate((auth, next) => auth.Concat(next).ToList())
-                    .Contains(a)
-            );
-        }
+        role.AddedNow();
+        Roles.Add(role);
     }
-    
-    
-    #region 
-    // if (r.Authorizations.Count > authorization.Count)
-    // {        
-    //     bool newAuthInsideRole = !authorization.Select(a => r.Authorizations.Contains(a)).Contains(false);
-    //     if (newAuthInsideRole)
-    //     {
-    //         rolesToAdd.Add(r);
-    //         authorization = new List<Authorization>();
-    //     }
-    // }
-    // else
-    // {
-    //     bool newAuthLeakRole =  !r.Authorizations.Select(a => authorization.Contains(a)).Contains(false);
-    //     if (newAuthLeakRole)
-    //     {
-    //         rolesToAdd.Add(r);
-    //         authorization.RemoveAll(a => 
-    //             rolesToAdd
-    //             .Select(r => r.Authorizations)
-    //             .Aggregate((auth, next) => auth.Concat(next).ToList())
-    //             .Contains(a)
-    //         );
-    //     }
-    // }
-    #endregion
-    
+    public void RemoveRole(Role role)
+    {
+        List<Role> rolesToRemove = new();
+        Roles.Where(r => r.Equals(role)).ToList().ForEach(r =>
+        {
+            if(r.Added)
+                rolesToRemove.Add(r);
+            else
+                r.Deactivate();
+        });
+    }
 }

@@ -15,17 +15,13 @@ public class Authorization : Atributte
 
     public void Activate() => Active = true;
     public void Deactivate() => Active = false;
-    
     public static Authorization Create(Page page, Action action, bool active) => new Authorization(page, action, active);
-    
     public static Authorization CreateToAdd(Page page, Action action, bool active)
     {
         var auth = new Authorization(page, action, active);
         auth.AddedNow();
         return auth;
     }
-
-
     public override bool Equals(object? obj)
     {
         if (obj is Authorization authorization)
