@@ -22,7 +22,7 @@ public class User
         allRoles.RemoveAll(r => Roles.Contains(r));
         rolesToAdd.AddRange(
             allRoles
-                .Select(r => r.AuthorizationsInRole(authorization))
+                .Select(r => r.AuthorizationsInRole(ref authorization))
                 .Where(r => r.IsValide()));
         
         if (rolesToAdd.Any())

@@ -10,5 +10,5 @@ public class Identifier
         return this as T ?? throw new InvalidCastException();
     }
     
-    public bool IsValide() => Id > 0;
+    public bool IsValide() => Id > -1;
 }

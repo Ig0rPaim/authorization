@@ -14,7 +14,6 @@ public class Role : Atributte
         Description = description;
         Authorizations = authorizations;
         Active = active;
-        base.Added =  true;
     }
     
     public void Activate() => Active = true;
@@ -44,35 +43,11 @@ public class Role : Atributte
             return new Role().SetInvalide<Role>();
         return this;
     }
-    public Role AuthorizationsInRole(List<Authorization> authorizationsToAdded)
+    public Role AuthorizationsInRole(ref List<Authorization> authorizationsToAdded)
     {
         if (Authorizations.Count >= authorizationsToAdded.Count)
             return AuthorizationsAreContainedInTheRole(ref authorizationsToAdded);
-        return AuthorizationsAreLeakingOfTheRole(authorizationsToAdded);
-    }
-    private Role AuthorizationsAreContainedInTheRole(ref List<Authorization> authorizationsToAdded)
-    {
-        bool newAuthInsideRole = !authorizationsToAdded.Select(a => Authorizations.Contains(a)).Contains(false);
-        if (!newAuthInsideRole) 
-            return new Role().SetInvalide<Role>();
-        
-        authorizationsToAdded = new List<Authorization>();
-        return this;
-        
-    }
-    private Role AuthorizationsAreLeakingOfTheRole(List<Authorization> authorizationsToAdded)
-    {
-        // if(Authorizations.Count >= authorizationsToAdded.Count)
-        //     return new Role().SetInvalide<Role>();
-        
-        bool newAuthLeakRole = !Authorizations.Select(authorizationsToAdded.Contains).Contains(false);
-        
-        if (!newAuthLeakRole)
-            return new Role().SetInvalide<Role>();
-        
-        authorizationsToAdded.RemoveAll(Authorizations.Contains);
-
-        return this;
+        return AuthorizationsAreLeakingOfTheRole(ref authorizationsToAdded);
     }
     public void AddAuthorizations(List<Authorization> authorization)
     {
@@ -105,4 +80,35 @@ public class Role : Atributte
         }
         return base.Equals(obj);
     }
+    
+    #region private methods
+    private Role AuthorizationsAreContainedInTheRole(ref List<Authorization> authorizationsToAdded)
+    {
+        if(authorizationsToAdded.Count <= 0)
+            return new Role().SetInvalide<Role>();
+        
+        bool newAuthInsideRole = !authorizationsToAdded.Select(a => Authorizations.Contains(a)).Contains(false);
+        
+        if (!newAuthInsideRole) 
+            return new Role().SetInvalide<Role>();
+        
+        authorizationsToAdded = new List<Authorization>();
+        return this;
+        
+    }
+    private Role AuthorizationsAreLeakingOfTheRole(ref List<Authorization> authorizationsToAdded)
+    {
+        if(authorizationsToAdded.Count <= 0)
+            return new Role().SetInvalide<Role>();
+        
+        bool newAuthLeakRole = !Authorizations.Select(authorizationsToAdded.Contains).Contains(false);
+        
+        if (!newAuthLeakRole)
+            return new Role().SetInvalide<Role>();
+        
+        authorizationsToAdded.RemoveAll(Authorizations.Contains);
+
+        return this;
+    }
+    #endregion
 }
