@@ -46,10 +46,10 @@ public class AuthorizationTests
         var auth2 = Authorization.Create(page2, Action.Edit, true);
         
         //act
-        var differentGuidSameAction = auth1.Equals(auth2);
+        var isEqual = auth1.Equals(auth2);
 
         //assert
-        Assert.False(differentGuidSameAction);
+        Assert.False(isEqual);
     }
     
     [Fact]
@@ -62,10 +62,10 @@ public class AuthorizationTests
         var auth = Authorization.Create(page, Action.See, true);
         var auth2 = Authorization.Create(page2, Action.Edit, true);
         //act
-        var sameGuidDifferentAction = auth.Equals(auth2);
+        var isEqual = auth.Equals(auth2);
         
         //assert
-        Assert.False(sameGuidDifferentAction);
+        Assert.False(isEqual);
     }
     
     [Fact]
@@ -79,10 +79,10 @@ public class AuthorizationTests
         var auth2 = Authorization.Create(page2, Action.See, true);
         
         //act
-        var sameGuidSameAction = auth.Equals(auth2);
+        var isEqual = auth.Equals(auth2);
         
         //assert
-        Assert.True(sameGuidSameAction);
+        Assert.True(isEqual);
     }
     #endregion
 }

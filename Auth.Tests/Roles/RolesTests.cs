@@ -99,6 +99,8 @@ public class RolesTests
 
         //assert
         Assert.True(result.IsValide());
+        Assert.Empty(auths);
+        Assert.Equal(role, result);
     }
     
     [Fact]
@@ -136,6 +138,7 @@ public class RolesTests
         //assert
         Assert.True(result.IsValide());
         Assert.Equal(difference, authsAll);
+        Assert.Equal(role, result);
     }
     
     [Fact]
@@ -171,6 +174,7 @@ public class RolesTests
 
         //assert
         Assert.True(result.IsValide());
+        Assert.Equal(role, result);
     }
 
     #region private methods
